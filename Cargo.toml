@@ -1,0 +1,26 @@
+[package]
+name = "baselog"
+version = "0.1.0"
+edition = "2018"
+authors = ["jin.phd@gmail.com"]
+description = "High performance sync style Rust logging facility dedicated for Linux"
+# documentation = ""
+# repository = ""
+readme = "README.md"
+keywords = ["log", "baselog", "filelog", "logging"]
+license = "Apache-2.0"
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "README.md",
+    "LICENSE",
+]
+
+[features]
+test = []
+default = ["termcolor"]
+
+[dependencies]
+log = { version = "0.4.*", features = ["std"] }
+termcolor = { version = "1.1.*", optional = true }
+chrono = "0.4.*"
