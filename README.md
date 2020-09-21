@@ -4,7 +4,7 @@ Baselog is modified from the [simplelog](https://github.com/Drakulix/simplelog.r
 
 Plus a little more we want：
 1. highest performance under Linux (but without async)
-  + lock free and nvme disk bandwidth saturation
+    + lock free and nvme disk bandwidth saturation
 2. file rotating support
 3. loggers opt-ins are more flexible 
 
