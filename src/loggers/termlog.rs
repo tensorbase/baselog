@@ -24,19 +24,11 @@ pub enum TermLogError {
 
 impl fmt::Display for TermLogError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use std::error::Error as FmtError;
-
-        write!(f, "{}", self.description())
+        write!(f, "{}", self.to_string())
     }
 }
 
 impl error::Error for TermLogError {
-    fn description(&self) -> &str {
-        match *self {
-            SetLogger(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             SetLogger(ref err) => Some(err),
