@@ -1,4 +1,4 @@
-use crossbeam::queue::ArrayQueue;
+use crossbeam_queue::ArrayQueue;
 use std::io;
 use std::io::{Error, Write};
 use std::sync::Mutex;
@@ -60,7 +60,7 @@ impl<W: Write> ThreadWriter<W> {
 
     // Buffer some data, if full then the value is returned as an error
     pub fn add(&self, buf: Vec<u8>) -> Result<(), Error> {
-        if self.buf.len() >= 40 {
+        if self.buf.len() == 99 {
             self.flush_buf().expect("Flush error: ");
         }
         Ok(self.buf.push(buf).expect("ArrayQueue push filed: "))
