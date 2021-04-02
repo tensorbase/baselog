@@ -7,7 +7,7 @@
 
 //! Module providing the SimpleLogger Implementation
 
-use super::logging::try_log;
+use super::logging::try_log_mutex;
 use crate::{Config, SharedLogger};
 use log::{
     set_boxed_logger, set_max_level, Level, LevelFilter, Log, Metadata, Record, SetLoggerError,
@@ -78,12 +78,12 @@ impl Log for SimpleLogger {
                 Level::Error => {
                     let stderr = stderr();
                     let mut stderr_lock = stderr.lock();
-                    let _ = try_log(&self.config, record, &mut stderr_lock);
+                    let _ = try_log_mutex(&self.config, record, &mut stderr_lock);
                 }
                 _ => {
                     let stdout = stdout();
                     let mut stdout_lock = stdout.lock();
-                    let _ = try_log(&self.config, record, &mut stdout_lock);
+                    let _ = try_log_mutex(&self.config, record, &mut stdout_lock);
                 }
             }
         }

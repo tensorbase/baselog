@@ -4,8 +4,10 @@ use log::{LevelFilter, Record};
 use std::io::{Error, Write};
 use std::thread;
 
+use super::buffer::ThreadWriter;
+
 #[inline(always)]
-pub fn try_log<W>(config: &Config, record: &Record<'_>, write: &mut W) -> Result<(), Error>
+pub fn try_log<W>(config: &Config, record: &Record<'_>, write: &ThreadWriter<W>) -> Result<(), Error>
 where
     W: Write + Sized,
 {
@@ -13,34 +15,41 @@ where
         return Ok(());
     }
 
+    // We allocate and build the log entry in thread
+    // then later add the entry to the ArrayQueue
+    let mut entry = Vec::<u8>::with_capacity(1024);
+
     if config.time <= record.level() && config.time != LevelFilter::Off {
-        write_time(write, config)?;
+        write_time(&mut entry, config)?;
     }
 
     if config.level <= record.level() && config.level != LevelFilter::Off {
-        write_level(record, write, config)?;
+        write_level(record, &mut entry, config)?;
     }
 
     if config.thread <= record.level() && config.thread != LevelFilter::Off {
         match config.thread_log_mode {
             ThreadLogMode::IDs => {
-                write_thread_id(write, config)?;
+                write_thread_id(&mut entry, config)?;
             }
             ThreadLogMode::Names | ThreadLogMode::Both => {
-                write_thread_name(write, config)?;
+                write_thread_name(&mut entry, config)?;
             }
         }
     }
 
     if config.target <= record.level() && config.target != LevelFilter::Off {
-        write_target(record, write)?;
+        write_target(record, &mut entry)?;
     }
 
     if config.location <= record.level() && config.location != LevelFilter::Off {
-        write_location(record, write)?;
+        write_location(record, &mut entry)?;
     }
 
-    write_args(record, write)
+    write_args(record, &mut entry)?;
+
+    write.add(entry).expect("Failed to write entry to ArrayQueue"); 
+    Ok(())
 }
 
 #[inline(always)]
@@ -174,4 +183,43 @@ pub fn should_skip(config: &Config, record: &Record<'_>) -> bool {
     }
 
     return false;
+}
+
+#[inline(always)]
+pub fn try_log_mutex<W>(config: &Config, record: &Record<'_>, write: &mut W) -> Result<(), Error>
+where
+    W: Write + Sized,
+{
+    if should_skip(config, record) {
+        return Ok(());
+    }
+
+    if config.time <= record.level() && config.time != LevelFilter::Off {
+        write_time(write, config)?;
+    }
+
+    if config.level <= record.level() && config.level != LevelFilter::Off {
+        write_level(record, write, config)?;
+    }
+
+    if config.thread <= record.level() && config.thread != LevelFilter::Off {
+        match config.thread_log_mode {
+            ThreadLogMode::IDs => {
+                write_thread_id(write, config)?;
+            }
+            ThreadLogMode::Names | ThreadLogMode::Both => {
+                write_thread_name(write, config)?;
+            }
+        }
+    }
+
+    if config.target <= record.level() && config.target != LevelFilter::Off {
+        write_target(record, write)?;
+    }
+
+    if config.location <= record.level() && config.location != LevelFilter::Off {
+        write_location(record, write)?;
+    }
+
+    write_args(record, write)
 }

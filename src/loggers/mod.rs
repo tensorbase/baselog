@@ -6,6 +6,7 @@ mod termlog;
 #[cfg(feature = "test")]
 mod testlog;
 mod writelog;
+mod buffer;
 
 pub use self::comblog::CombinedLogger;
 pub use self::baselog::SimpleLogger;

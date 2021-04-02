@@ -11,13 +11,14 @@ use super::logging::try_log;
 use crate::{Config, SharedLogger};
 use log::{set_boxed_logger, set_max_level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::io::Write;
-use std::sync::Mutex;
+
+use super::buffer::ThreadWriter;
 
 /// The WriteLogger struct. Provides a Logger implementation for structs implementing `Write`, e.g. File
 pub struct WriteLogger<W: Write + Send + 'static> {
     level: LevelFilter,
     config: Config,
-    writable: Mutex<W>,
+    writable: ThreadWriter<W>,
 }
 
 impl<W: Write + Send + 'static> WriteLogger<W> {
@@ -60,7 +61,7 @@ impl<W: Write + Send + 'static> WriteLogger<W> {
         Box::new(WriteLogger {
             level: log_level,
             config: config,
-            writable: Mutex::new(writable),
+            writable: ThreadWriter::new(writable),
         })
     }
 }
@@ -72,13 +73,13 @@ impl<W: Write + Send + 'static> Log for WriteLogger<W> {
 
     fn log(&self, record: &Record<'_>) {
         if self.enabled(record.metadata()) {
-            let mut write_lock = self.writable.lock().unwrap();
-            let _ = try_log(&self.config, record, &mut *write_lock);
+            //let mut write_lock = self.writable.lock().unwrap();
+            let _ = try_log(&self.config, record, &self.writable);
         }
     }
 
     fn flush(&self) {
-        let _ = self.writable.lock().unwrap().flush();
+        let _ = self.writable.flush_buf();
     }
 }
 
